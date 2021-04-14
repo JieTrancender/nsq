@@ -34,12 +34,14 @@ func acceptVersion(req *http.Request) int {
 
 func PlainText(f APIHandler) APIHandler {
 	return func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) (interface{}, error) {
+		fmt.Println("api_response PlainText")
 		code := 200
 		data, err := f(w, req, ps)
 		if err != nil {
 			code = err.(Err).Code
 			data = err.Error()
 		}
+
 		switch d := data.(type) {
 		case string:
 			w.WriteHeader(code)
@@ -72,15 +74,18 @@ func RespondV1(w http.ResponseWriter, code int, data interface{}) {
 	var isJSON bool
 
 	if code == 200 {
+		fmt.Printf("200 type %v\n", data)
 		switch data.(type) {
 		case string:
 			response = []byte(data.(string))
 		case []byte:
+			fmt.Printf("200 type []byte %v\n", data)
 			response = data.([]byte)
 		case nil:
 			response = []byte{}
 		default:
 			isJSON = true
+			fmt.Printf("200 type json %v\n", data)
 			response, err = json.Marshal(data)
 			if err != nil {
 				code = 500
@@ -117,6 +122,7 @@ func Decorate(f APIHandler, ds ...Decorator) httprouter.Handle {
 func Log(logf lg.AppLogFunc) Decorator {
 	return func(f APIHandler) APIHandler {
 		return func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) (interface{}, error) {
+			fmt.Println("api_response Log")
 			start := time.Now()
 			response, err := f(w, req, ps)
 			elapsed := time.Since(start)
